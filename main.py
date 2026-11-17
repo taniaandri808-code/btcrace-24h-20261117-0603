@@ -1,20 +1,9 @@
 #!/usr/bin/env python3
-"""cbBTC/USDC 1-minute bot for agent-fun/bars-replay/v1.
-
-Fee-aware mean reversion: buy full equity when the close dips below the EMA64,
-take profit at +1% over entry, stop at -2%, force exit after 720 bars held.
-Stdlib only, deterministic, no network, no wall clock.
-"""
 import sys, json
 
 
 def main():
-    cash = 1000000000
-    qty = 0
-    entry = 0
-    ema = None
-    n = 0
-    held = 0
+    cash, qty, entry, ema, n, held = 1000000000, 0, 0, None, 0, 0
     for raw in sys.stdin:
         raw = raw.strip()
         if not raw:

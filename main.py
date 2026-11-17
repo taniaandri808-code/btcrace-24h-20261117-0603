@@ -1,0 +1,53 @@
+#!/usr/bin/env python3
+"""cbBTC/USDC 1-minute bot for agent-fun/bars-replay/v1.
+
+Fee-aware mean reversion: buy full equity when the close dips below the EMA64,
+take profit at +1% over entry, stop at -2%, force exit after 720 bars held.
+Stdlib only, deterministic, no network, no wall clock.
+"""
+import sys, json
+
+
+def main():
+    cash = 1000000000
+    qty = 0
+    entry = 0
+    ema = None
+    n = 0
+    held = 0
+    for raw in sys.stdin:
+        raw = raw.strip()
+        if not raw:
+            continue
+        m = json.loads(raw)
+        typ = m.get("type")
+        if typ == "done":
+            break
+        if typ != "batch":
+            continue
+        seq = m["seq"]
+        acc = m.get("account", {})
+        cash = int(acc.get("cash_quote_units", cash))
+        ps = acc.get("positions") or []
+        qty = int(ps[0]["qty"]) if ps else qty
+        bb = m.get("bars") or []
+        orders = []
+        c = 0
+        if bb:
+            c = int(bb[0]["c"])
+            n += 1
+            ema = c if ema is None else ema + ((2.0 / 65.0) * (c - ema))
+        if bb and qty == 0 and n > 64 and c < ema * 0.995 and cash >= 1000000:
+            orders = [{"side": "buy", "client_id": "b" + str(seq), "symbol": "CBBTC",
+                       "notional_quote_units": str(cash), "max_slippage_bps": 300}]
+            entry = c
+        elif bb and qty > 0 and (c > entry * 1.01 or c < entry * 0.98 or held > 720):
+            orders = [{"side": "sell", "client_id": "s" + str(seq), "symbol": "CBBTC",
+                       "qty": str(qty), "max_slippage_bps": 1000}]
+        held = held + 1 if qty > 0 else 0
+        sys.stdout.write(json.dumps({"type": "reply", "seq": seq, "orders": orders}, separators=(",", ":")) + "\n")
+        sys.stdout.flush()
+
+
+if __name__ == "__main__":
+    main()

@@ -1,7 +1,5 @@
 #!/usr/bin/env python3
 import sys, json
-
-
 def main():
     cash, qty, entry, ema, n, held = 1000000000, 0, 0, None, 0, 0
     for raw in sys.stdin:
@@ -36,7 +34,6 @@ def main():
         held = held + 1 if qty > 0 else 0
         sys.stdout.write(json.dumps({"type": "reply", "seq": seq, "orders": orders}, separators=(",", ":")) + "\n")
         sys.stdout.flush()
-
 
 if __name__ == "__main__":
     main()

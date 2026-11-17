@@ -19,9 +19,8 @@ def main():
         qty = int(ps[0]["qty"]) if ps else qty
         bb = m.get("bars") or []
         orders = []
-        c = 0
+        c = int(bb[0]["c"]) if bb else 0
         if bb:
-            c = int(bb[0]["c"])
             n += 1
             ema = c if ema is None else ema + ((2.0 / 65.0) * (c - ema))
         if bb and qty == 0 and n > 64 and c < ema * 0.995 and cash >= 1000000:
